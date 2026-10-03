@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	"github.com/yourname/community-search/internal/cache"
-	"github.com/yourname/community-search/internal/search"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/cache"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
 )
 
 type Deps struct {

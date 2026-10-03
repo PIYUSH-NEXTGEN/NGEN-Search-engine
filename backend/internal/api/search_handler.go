@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/yourname/community-search/internal/search"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
 )
 
 type searchResponse struct {

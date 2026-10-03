@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/yourname/community-search/internal/api"
-	"github.com/yourname/community-search/internal/cache"
-	"github.com/yourname/community-search/internal/config"
-	"github.com/yourname/community-search/internal/search"
-	"github.com/yourname/community-search/internal/store"
-	"github.com/yourname/community-search/internal/store/queries"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/api"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/cache"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/config"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/store"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/store/queries"
 )
 
 func main() {

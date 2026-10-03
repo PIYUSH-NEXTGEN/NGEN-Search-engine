@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/yourname/community-search/internal/cache"
-	"github.com/yourname/community-search/internal/store/queries"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/cache"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/store/queries"
 )
 
 type Result struct {
