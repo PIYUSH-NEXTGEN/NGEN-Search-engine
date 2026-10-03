@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5/middleware"
-
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/cache"
 )
 
@@ -15,10 +13,10 @@ import (
 func rateLimitMiddleware(limiter *cache.RateLimiter) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip := middleware.GetReqID(r.Context()) // fallback if RealIP isn't set upstream
-			if r.RemoteAddr != "" {
-				ip = r.RemoteAddr
-			}
+			// RealIP runs before this middleware (see router.go) and rewrites
+			// RemoteAddr to the real client address, so RemoteAddr alone is
+			// the rate-limit key — a request ID is not a client address.
+			ip := r.RemoteAddr
 
 			allowed, err := limiter.Allow(r.Context(), ip)
 			if err != nil {
