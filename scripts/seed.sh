@@ -22,7 +22,9 @@ if [ -z "$(docker compose ps --status running -q postgres)" ]; then
   exit 1
 fi
 
-docker compose exec -T postgres psql -U community -d community_search <<'SQL'
+# ON_ERROR_STOP makes psql exit non-zero on any SQL error, so set -e
+# actually catches a failed seed instead of printing a false success.
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U community -d community_search <<'SQL'
 INSERT INTO members (full_name, headline, bio, location, is_public) VALUES
 ('Asha Rao', 'ML engineer, ex-Google', 'Asha builds recommendation systems and has spent the last five years working on large-scale machine learning infrastructure. Previously at Google Brain.', 'Bengaluru', TRUE),
 ('Marcus Webb', 'Fintech founder', 'Marcus co-founded a payments startup focused on cross-border remittances in Southeast Asia. Background in distributed systems.', 'Singapore', TRUE),
