@@ -9,16 +9,26 @@ import (
 	"github.com/go-chi/cors"
 
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/cache"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/config"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
 )
 
 type Deps struct {
 	SearchService *search.Service
 	RateLimiter   *cache.RateLimiter
+	AllowedOrigin string // CORS: the single origin allowed to call this API
 }
 
 func NewRouter(deps Deps) http.Handler {
 	r := chi.NewRouter()
+
+	// A missing AllowedOrigins entry is not treated as "allow all" by
+	// go-chi/cors — an empty string would match no browser origin at all, so
+	// fall back to the dev default instead of silently breaking CORS.
+	allowedOrigin := deps.AllowedOrigin
+	if allowedOrigin == "" {
+		allowedOrigin = config.DefaultAllowedOrigin
+	}
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -26,7 +36,7 @@ func NewRouter(deps Deps) http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(10 * time.Second))
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // frontend dev origin; tighten for prod
+		AllowedOrigins:   []string{allowedOrigin}, // set ALLOWED_ORIGIN per environment
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type"},
 		AllowCredentials: true,

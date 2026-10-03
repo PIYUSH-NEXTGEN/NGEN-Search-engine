@@ -42,6 +42,7 @@ func main() {
 	router := api.NewRouter(api.Deps{
 		SearchService: searchService,
 		RateLimiter:   rateLimiter,
+		AllowedOrigin: cfg.AllowedOrigin,
 	})
 
 	addr := ":" + cfg.Port
