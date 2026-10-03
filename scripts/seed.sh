@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 # Loads a handful of sample members so you have something to search
-# against locally. Adjust DATABASE_URL if not using the default compose setup.
+# against locally. psql runs inside the compose Postgres container, so no
+# psql install is needed on the host. Start the stack first:
+#   cd deploy && docker compose up -d
 set -euo pipefail
 
-DATABASE_URL="${DATABASE_URL:-postgres://community:community@localhost:5432/community_search?sslmode=disable}"
+# docker compose resolves the compose file from the working directory.
+cd "$(dirname "$0")/../deploy"
 
-psql "$DATABASE_URL" <<'SQL'
+# The SQL is piped straight into the container, so the only host requirement
+# is a working docker compose — no psql binary needed.
+if ! docker compose version >/dev/null 2>&1; then
+  echo "error: 'docker compose' is not working in this shell." >&2
+  echo "check Docker Desktop is running (and WSL integration if you use WSL)." >&2
+  exit 1
+fi
+
+if [ -z "$(docker compose ps --status running -q postgres)" ]; then
+  echo "error: postgres container is not running." >&2
+  echo "start it with: cd deploy && docker compose up -d" >&2
+  exit 1
+fi
+
+docker compose exec -T postgres psql -U community -d community_search <<'SQL'
 INSERT INTO members (full_name, headline, bio, location, is_public) VALUES
 ('Asha Rao', 'ML engineer, ex-Google', 'Asha builds recommendation systems and has spent the last five years working on large-scale machine learning infrastructure. Previously at Google Brain.', 'Bengaluru', TRUE),
 ('Marcus Webb', 'Fintech founder', 'Marcus co-founded a payments startup focused on cross-border remittances in Southeast Asia. Background in distributed systems.', 'Singapore', TRUE),
