@@ -1,0 +1,14 @@
+# env
+.env
+
+# Go
+backend/bin/
+*.test
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# misc
+.DS_Store
