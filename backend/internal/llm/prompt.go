@@ -37,16 +37,19 @@ JSON must be exactly one of these two shapes:
 Rules:
 - If the query is not about this community — not about members, skills,
   roles, projects, or experience — reply {"relevant": false}.
-- If the records below do not support an answer, reply {"relevant": false}.
+- If neither the records below nor the previous turns support an answer, reply {"relevant": false}.
 - Otherwise set "relevant": true and write "answer" as one flowing
   paragraph, not a list.
-- Use only facts present in the records. Do not invent names, skills,
-  employers, locations, or any other detail that is not in the data.
+- Use only facts present in the records or stated in a previous turn's
+  answer. Do not invent names, skills,
+  employers, locations, or any other detail that appears nowhere above.
 `)
 	if len(history) > 0 {
 		b.WriteString(`
 Previous turns — context for follow-up questions such as "tell me more about
-her". They are not new facts: the grounding rules above still apply.
+her". Facts stated in an earlier answer were grounded in that turn's records
+and may be used to answer a follow-up about them; still never invent names
+or details that appear nowhere above.
 `)
 		for _, turn := range history {
 			fmt.Fprintf(&b, "User: %s\nAssistant: %s\n", turn.Query, turn.Answer)

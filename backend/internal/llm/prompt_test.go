@@ -53,7 +53,8 @@ func TestBuildPromptIncludesPriorTurns(t *testing.T) {
 		"who works in cybersecurity",             // the prior question
 		"Divynash Shakya studies cybersecurity.", // the prior answer
 		"tell me more about her",                 // current query still present
-		"grounding rules above still apply",      // history can't loosen grounding
+		"Facts stated in an earlier answer",      // prior answers are usable grounding
+		"never invent names",                     // history can't loosen grounding
 	}
 	for _, want := range wants {
 		if !strings.Contains(prompt, want) {
@@ -66,5 +67,23 @@ func TestBuildPromptOmitsHistorySectionWhenNone(t *testing.T) {
 	prompt := BuildPrompt("who knows machine learning", testRecords(), nil)
 	if strings.Contains(prompt, "Previous turns") {
 		t.Error("no history passed, but prompt still contains a Previous turns section")
+	}
+}
+
+func TestBuildPromptAllowsAnswerFromHistoryWhenRecordsEmpty(t *testing.T) {
+	history := []Turn{
+		{Query: "machine learning", Answer: "Piyush Baraskar is based in Bhopal."},
+	}
+	prompt := BuildPrompt("where are they based?", nil, history)
+
+	wants := []string{
+		"Previous turns",                                   // history section exists
+		"Piyush Baraskar is based in Bhopal.",              // prior answer's facts usable
+		"neither the records below nor the previous turns", // refusal only when both are empty of support
+	}
+	for _, want := range wants {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("prompt missing %q", want)
+		}
 	}
 }
