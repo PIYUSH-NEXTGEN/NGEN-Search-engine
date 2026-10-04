@@ -11,6 +11,13 @@ type AskResult struct {
 	Answer   string `json:"answer"`
 }
 
+// Turn is one earlier question and the answer that was given for it — the
+// unit of history a Session keeps and the prompt replays.
+type Turn struct {
+	Query  string `json:"query"`
+	Answer string `json:"answer"`
+}
+
 // The wire shapes below mirror Google's generateContent REST API — only the
 // fields we actually read or write.
 // https://ai.google.dev/gemini-api/docs/text-generation

@@ -12,11 +12,13 @@ import (
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/config"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/llm"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/session"
 )
 
 type Deps struct {
 	SearchService *search.Service
 	AnswerCache   *cache.AnswerCache
+	SessionStore  *session.Store
 	LLMClient     *llm.Client
 	RateLimiter   *cache.RateLimiter
 	AllowedOrigin string // CORS: the single origin allowed to call this API
@@ -55,7 +57,7 @@ func NewRouter(deps Deps) http.Handler {
 		api.Get("/search", searchHandler(deps.SearchService))
 		// /api/ask sits inside the same route block, so it inherits the
 		// rate limiter mounted above.
-		api.Post("/ask", askHandler(deps.SearchService, deps.LLMClient, deps.AnswerCache))
+		api.Post("/ask", askHandler(deps.SearchService, deps.LLMClient, deps.AnswerCache, deps.SessionStore))
 	})
 
 	return r

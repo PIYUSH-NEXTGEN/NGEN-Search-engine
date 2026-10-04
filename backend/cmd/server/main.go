@@ -11,6 +11,7 @@ import (
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/config"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/llm"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/session"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/store"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/store/queries"
 )
@@ -39,6 +40,7 @@ func main() {
 	searchCache := cache.NewSearchCache(redisClient)
 	searchService := search.NewService(q, searchCache)
 	answerCache := cache.NewAnswerCache(redisClient)
+	sessionStore := session.NewStore(redisClient)
 	rateLimiter := cache.NewRateLimiter(redisClient, 60, time.Minute) // 60 req/min per IP
 	llmClient := llm.NewClient(cfg.LLMAPIKey, cfg.LLMModel)
 	if cfg.LLMAPIKey == "" {
@@ -49,6 +51,7 @@ func main() {
 	router := api.NewRouter(api.Deps{
 		SearchService: searchService,
 		AnswerCache:   answerCache,
+		SessionStore:  sessionStore,
 		LLMClient:     llmClient,
 		RateLimiter:   rateLimiter,
 		AllowedOrigin: cfg.AllowedOrigin,

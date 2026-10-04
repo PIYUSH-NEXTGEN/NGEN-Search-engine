@@ -15,7 +15,7 @@ func testRecords() []search.Result {
 }
 
 func TestBuildPromptCarriesQueryRecordsAndRules(t *testing.T) {
-	prompt := BuildPrompt("who knows machine learning", testRecords())
+	prompt := BuildPrompt("who knows machine learning", testRecords(), nil)
 
 	wants := []string{
 		"who knows machine learning", // the query itself
@@ -36,8 +36,35 @@ func TestBuildPromptCarriesQueryRecordsAndRules(t *testing.T) {
 }
 
 func TestBuildPromptEmptyRecordsRenderAsArray(t *testing.T) {
-	prompt := BuildPrompt("anything", nil)
+	prompt := BuildPrompt("anything", nil, nil)
 	if !strings.Contains(prompt, "[]") {
 		t.Errorf("empty records should render as [], got prompt:\n%s", prompt)
+	}
+}
+
+func TestBuildPromptIncludesPriorTurns(t *testing.T) {
+	history := []Turn{
+		{Query: "who works in cybersecurity", Answer: "Divynash Shakya studies cybersecurity."},
+	}
+	prompt := BuildPrompt("tell me more about her", testRecords(), history)
+
+	wants := []string{
+		"Previous turns",                         // history section exists
+		"who works in cybersecurity",             // the prior question
+		"Divynash Shakya studies cybersecurity.", // the prior answer
+		"tell me more about her",                 // current query still present
+		"grounding rules above still apply",      // history can't loosen grounding
+	}
+	for _, want := range wants {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("prompt missing %q", want)
+		}
+	}
+}
+
+func TestBuildPromptOmitsHistorySectionWhenNone(t *testing.T) {
+	prompt := BuildPrompt("who knows machine learning", testRecords(), nil)
+	if strings.Contains(prompt, "Previous turns") {
+		t.Error("no history passed, but prompt still contains a Previous turns section")
 	}
 }

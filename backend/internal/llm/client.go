@@ -43,9 +43,10 @@ func NewClient(apiKey, model string) *Client {
 	}
 }
 
-// Ask sends the query and records to Gemini and parses the JSON answer.
-// Anything the model gets wrong comes back as an error, never a panic.
-func (c *Client) Ask(ctx context.Context, query string, records []search.Result) (AskResult, error) {
+// Ask sends the query, records, and any prior turns to Gemini and parses the
+// JSON answer. history may be nil for a fresh conversation. Anything the
+// model gets wrong comes back as an error, never a panic.
+func (c *Client) Ask(ctx context.Context, query string, records []search.Result, history []Turn) (AskResult, error) {
 	if strings.TrimSpace(query) == "" {
 		return AskResult{}, fmt.Errorf("query must not be empty")
 	}
@@ -56,7 +57,7 @@ func (c *Client) Ask(ctx context.Context, query string, records []search.Result)
 	payload, err := json.Marshal(geminiRequest{
 		Contents: []geminiContent{{
 			Role:  "user",
-			Parts: []geminiPart{{Text: BuildPrompt(query, records)}},
+			Parts: []geminiPart{{Text: BuildPrompt(query, records, history)}},
 		}},
 	})
 	if err != nil {

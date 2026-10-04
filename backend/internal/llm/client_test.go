@@ -40,7 +40,7 @@ func askWithResponse(t *testing.T, status int, body string) (AskResult, error) {
 
 	c := NewClient("test-key", "gemini-2.5-flash")
 	c.baseURL = srv.URL
-	return c.Ask(context.Background(), "who knows machine learning", testRecords())
+	return c.Ask(context.Background(), "who knows machine learning", testRecords(), nil)
 }
 
 func TestAskParsesGeminiResponse(t *testing.T) {
@@ -58,7 +58,7 @@ func TestAskParsesGeminiResponse(t *testing.T) {
 	c := NewClient("test-key", "gemini-2.5-flash")
 	c.baseURL = srv.URL
 
-	got, err := c.Ask(context.Background(), "who knows machine learning", testRecords())
+	got, err := c.Ask(context.Background(), "who knows machine learning", testRecords(), nil)
 	if err != nil {
 		t.Fatalf("Ask: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestAskReportsGeminiErrorBody(t *testing.T) {
 
 func TestAskRequiresAPIKey(t *testing.T) {
 	c := NewClient("", "gemini-2.5-flash")
-	_, err := c.Ask(context.Background(), "anything", nil)
+	_, err := c.Ask(context.Background(), "anything", nil, nil)
 	if err == nil {
 		t.Fatal("want error for empty API key, got nil")
 	}
@@ -150,5 +150,26 @@ func TestStripFences(t *testing.T) {
 				t.Errorf("stripFences(%q) = %q, want bare JSON", in, got)
 			}
 		})
+	}
+}
+
+func TestAskSendsHistoryInPrompt(t *testing.T) {
+	var gotBody string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		io.WriteString(w, geminiBody(t, `{"relevant": true, "answer": "Ask her about Linux."}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	c := NewClient("test-key", "gemini-2.5-flash")
+	c.baseURL = srv.URL
+
+	history := []Turn{{Query: "who knows cybersecurity", Answer: "Divynash does."}}
+	if _, err := c.Ask(context.Background(), "tell me more about her", testRecords(), history); err != nil {
+		t.Fatalf("Ask: %v", err)
+	}
+	if !strings.Contains(gotBody, "who knows cybersecurity") || !strings.Contains(gotBody, "Divynash does.") {
+		t.Errorf("prior turns missing from request body: %s", gotBody)
 	}
 }
