@@ -36,6 +36,8 @@ services:
       PORT: "8080"
       APP_ENV: development
       ALLOWED_ORIGIN: "${ALLOWED_ORIGIN:-http://localhost:3000}"
+      LLM_API_KEY: "${LLM_API_KEY:-}"
+      LLM_MODEL: "${LLM_MODEL:-gemini-3.8-flash}"
     depends_on:
       postgres:
         condition: service_healthy

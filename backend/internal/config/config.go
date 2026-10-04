@@ -29,7 +29,7 @@ func Load() (*Config, error) {
 		DatabaseURL:   getEnv("DATABASE_URL", ""),
 		RedisAddr:     getEnv("REDIS_ADDR", "localhost:6379"),
 		LLMAPIKey:     getEnv("LLM_API_KEY", ""),
-		LLMModel:      getEnv("LLM_MODEL", "claude-sonnet-4-6"),
+		LLMModel:      getEnv("LLM_MODEL", "gemini-3.8-flash"),
 		Env:           getEnv("APP_ENV", "development"),
 		AllowedOrigin: getEnv("ALLOWED_ORIGIN", DefaultAllowedOrigin),
 	}
