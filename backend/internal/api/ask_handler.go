@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -55,7 +56,9 @@ func askHandler(svc *search.Service, asker *llm.Client, answers *cache.AnswerCac
 		if err != nil {
 			// Surface the failure instead of inventing a "not relevant":
 			// a missing API key must not read as "your query is off-topic".
-			// A failed call is also never cached.
+			// A failed call is also never cached. The detail goes to the
+			// server log — the response stays generic.
+			log.Printf("ask: %v", err)
 			writeError(w, http.StatusBadGateway, "answer generation failed")
 			return
 		}
