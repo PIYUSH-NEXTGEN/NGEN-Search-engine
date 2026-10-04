@@ -16,3 +16,14 @@ export interface SearchResponse {
   query: string;
   results: MemberResult[];
 }
+
+// Mirrors the askResponse struct in backend/internal/api/ask_handler.go.
+// results ride along with the generated answer so the page can render
+// member cards under the paragraph without a second request.
+export interface AskResponse {
+  query: string;
+  relevant: boolean;
+  answer: string;
+  results: MemberResult[];
+  session_id: string;
+}
