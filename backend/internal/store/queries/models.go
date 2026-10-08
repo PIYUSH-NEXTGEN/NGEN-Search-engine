@@ -58,24 +58,3 @@ type SearchCommunityInfoRow struct {
 	Body  string  `json:"body"`
 	Rank  float32 `json:"rank"`
 }
-
-type Project struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description *string   `json:"description"`
-	Status      string    `json:"status"`
-	Link        *string   `json:"link"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-}
-
-// SearchProjectsRow is the shape returned by the SearchProjects query,
-// including the computed relevance rank.
-type SearchProjectsRow struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description *string   `json:"description"`
-	Status      string    `json:"status"`
-	Link        *string   `json:"link"`
-	Rank        float32   `json:"rank"`
-}
