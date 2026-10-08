@@ -6,6 +6,30 @@ import (
 	"context"
 )
 
+const listCommunityInfo = `
+SELECT id, slug, title, body, created_at, updated_at
+FROM community_info
+ORDER BY slug
+`
+
+func (q *Queries) ListCommunityInfo(ctx context.Context) ([]CommunityInfo, error) {
+	rows, err := q.db.Query(ctx, listCommunityInfo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []CommunityInfo
+	for rows.Next() {
+		var c CommunityInfo
+		if err := rows.Scan(&c.ID, &c.Slug, &c.Title, &c.Body, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, c)
+	}
+	return items, rows.Err()
+}
+
 const upsertCommunityInfo = `
 INSERT INTO community_info (slug, title, body)
 VALUES ($1, $2, $3)

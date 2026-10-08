@@ -1,3 +1,8 @@
+-- name: ListCommunityInfo :many
+SELECT id, slug, title, body, created_at, updated_at
+FROM community_info
+ORDER BY slug;
+
 -- name: UpsertCommunityInfo :one
 INSERT INTO community_info (slug, title, body)
 VALUES (@slug, @title, @body)
