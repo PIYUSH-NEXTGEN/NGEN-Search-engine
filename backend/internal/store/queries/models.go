@@ -39,3 +39,43 @@ type SearchMembersRow struct {
 	Links    []byte    `json:"links"`
 	Rank     float32   `json:"rank"`
 }
+
+type CommunityInfo struct {
+	ID        int32     `json:"id"`
+	Slug      string    `json:"slug"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// SearchCommunityInfoRow is the shape returned by the SearchCommunityInfo
+// query, including the computed relevance rank.
+type SearchCommunityInfoRow struct {
+	ID    int32   `json:"id"`
+	Slug  string  `json:"slug"`
+	Title string  `json:"title"`
+	Body  string  `json:"body"`
+	Rank  float32 `json:"rank"`
+}
+
+type Project struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	Status      string    `json:"status"`
+	Link        *string   `json:"link"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// SearchProjectsRow is the shape returned by the SearchProjects query,
+// including the computed relevance rank.
+type SearchProjectsRow struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	Status      string    `json:"status"`
+	Link        *string   `json:"link"`
+	Rank        float32   `json:"rank"`
+}
