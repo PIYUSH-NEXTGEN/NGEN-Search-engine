@@ -39,7 +39,7 @@ func NewRouter(deps Deps) http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(10 * time.Second))
+	r.Use(middleware.Timeout(30 * time.Second))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{allowedOrigin}, // set ALLOWED_ORIGIN per environment
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},

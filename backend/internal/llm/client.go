@@ -35,18 +35,22 @@ func NewClient(apiKey, model string) *Client {
 		apiKey: apiKey,
 		model:  model,
 		httpClient: &http.Client{
-			// api.NewRouter times the whole request out at 10s, so a longer
-			// client timeout here would never be the one to fire first.
-			Timeout: 10 * time.Second,
+			// api.NewRouter times the whole request out at 30s, so the
+			// client must give up first — otherwise the handler would
+			// still be waiting on Gemini when the router kills it. The
+			// standing community info (rules alone run ~2KB) makes model
+			// latency routinely pass the old 10s bound.
+			Timeout: 25 * time.Second,
 		},
 		baseURL: geminiBaseURL,
 	}
 }
 
-// Ask sends the query, records, and any prior turns to Gemini and parses the
-// JSON answer. history may be nil for a fresh conversation. Anything the
-// model gets wrong comes back as an error, never a panic.
-func (c *Client) Ask(ctx context.Context, query string, records []search.Result, history []Turn) (AskResult, error) {
+// Ask sends the query, grouped search results, standing community info, and
+// any prior turns to Gemini and parses the JSON answer. history may be nil
+// for a fresh conversation. Anything the model gets wrong comes back as an
+// error, never a panic.
+func (c *Client) Ask(ctx context.Context, query string, results search.AllResults, info []Info, history []Turn) (AskResult, error) {
 	if strings.TrimSpace(query) == "" {
 		return AskResult{}, fmt.Errorf("query must not be empty")
 	}
@@ -57,7 +61,7 @@ func (c *Client) Ask(ctx context.Context, query string, records []search.Result,
 	payload, err := json.Marshal(geminiRequest{
 		Contents: []geminiContent{{
 			Role:  "user",
-			Parts: []geminiPart{{Text: BuildPrompt(query, records, history)}},
+			Parts: []geminiPart{{Text: BuildPrompt(query, results, info, history)}},
 		}},
 	})
 	if err != nil {

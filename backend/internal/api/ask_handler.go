@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/cache"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/llm"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
 	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/session"
@@ -29,12 +29,41 @@ type askResponse struct {
 	SessionID string          `json:"session_id"`
 }
 
+// searcher is the retrieval surface askHandler needs: grouped search plus the
+// standing community_info context. search.Service satisfies it; tests use a
+// fake.
+type searcher interface {
+	SearchAll(ctx context.Context, query string) (search.AllResults, error)
+	StandingInfo(ctx context.Context) ([]search.CommunityInfo, error)
+}
+
+// asker generates one grounded answer. llm.Client satisfies it; tests use a
+// fake.
+type asker interface {
+	Ask(ctx context.Context, query string, results search.AllResults, info []llm.Info, history []llm.Turn) (llm.AskResult, error)
+}
+
+// answerCacher stores context-free answers. cache.AnswerCache satisfies it;
+// tests use a fake.
+type answerCacher interface {
+	Get(ctx context.Context, query string, dest any) (bool, error)
+	Set(ctx context.Context, query string, value any) error
+}
+
+// sessionStorer keeps follow-up turns. session.Store satisfies it; tests use
+// a fake.
+type sessionStorer interface {
+	Get(ctx context.Context, sessionID string) (*session.Session, bool, error)
+	Save(ctx context.Context, sessionID string, sess *session.Session) error
+}
+
 // askHandler handles POST /api/ask: retrieve first with the same service
 // /api/search uses, then answer from cache or from the model. Prior turns
 // from the caller's session go into the prompt so follow-up questions have
-// context. The raw results ride along so the frontend can still render
-// member cards under the paragraph.
-func askHandler(svc *search.Service, asker *llm.Client, answers *cache.AnswerCache, sessions *session.Store) http.HandlerFunc {
+// context. The member group rides along so the frontend can still render
+// member cards under the paragraph — "results" stays the members array so
+// the current frontend keeps working untouched.
+func askHandler(svc searcher, asker asker, answers answerCacher, sessions sessionStorer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req askRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -46,10 +75,31 @@ func askHandler(svc *search.Service, asker *llm.Client, answers *cache.AnswerCac
 			return
 		}
 
-		results, err := svc.Search(r.Context(), req.Query)
+		all, err := svc.SearchAll(r.Context(), req.Query)
 		if err != nil {
+			log.Printf("ask: search all: %v", err)
 			writeError(w, http.StatusInternalServerError, "search failed")
 			return
+		}
+		if all.Members == nil {
+			all.Members = []search.Result{}
+		}
+
+		// Standing community info goes into every prompt so general
+		// questions ("what is this community about?") work even when
+		// full-text search matched nothing. A failed load degrades to an
+		// empty list rather than failing the ask — the matched groups may
+		// still answer the question.
+		standing, err := svc.StandingInfo(r.Context())
+		if err != nil {
+			log.Printf("ask: standing info: %v", err)
+			standing = []search.CommunityInfo{}
+		}
+		// Map into the llm package's own row shape so the answer layer
+		// doesn't depend on the search package's model.
+		info := make([]llm.Info, 0, len(standing))
+		for _, row := range standing {
+			info = append(info, llm.Info{Slug: row.Slug, Title: row.Title, Body: row.Body})
 		}
 
 		// Reuse the caller's session when they send one; otherwise mint an id
@@ -79,7 +129,7 @@ func askHandler(svc *search.Service, asker *llm.Client, answers *cache.AnswerCac
 			}
 		}
 		if !answered {
-			answer, err = asker.Ask(r.Context(), req.Query, results, history)
+			answer, err = asker.Ask(r.Context(), req.Query, all, info, history)
 			if err != nil {
 				// Surface the failure instead of inventing a "not relevant":
 				// a missing API key must not read as "your query is off-topic".
@@ -104,7 +154,7 @@ func askHandler(svc *search.Service, asker *llm.Client, answers *cache.AnswerCac
 
 		writeJSON(w, http.StatusOK, askResponse{
 			Query: req.Query, Relevant: answer.Relevant, Answer: answer.Answer,
-			Results: results, SessionID: sessionID,
+			Results: all.Members, SessionID: sessionID,
 		})
 	}
 }

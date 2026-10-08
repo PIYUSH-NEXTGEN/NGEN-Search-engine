@@ -21,8 +21,11 @@ func NewAnswerCache(client *redis.Client) *AnswerCache {
 	return &AnswerCache{client: client}
 }
 
+// answerKey uses its own "answer2:" prefix, bumped when the answer layer
+// started grounding on the full standing community info — entries written
+// under the old "answer:" key predate that change and must never be served.
 func answerKey(query string) string {
-	return "answer:" + NormalizeQuery(query)
+	return "answer2:" + NormalizeQuery(query)
 }
 
 // Get returns the cached answer for a query, or (nil, false) on a cache miss.

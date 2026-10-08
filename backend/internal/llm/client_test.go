@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/PIYUSH-NEXTGEN/NGEN-Search-engine/internal/search"
 )
 
 // geminiBody wraps text the way Gemini wraps model output, so tests build
@@ -40,7 +42,7 @@ func askWithResponse(t *testing.T, status int, body string) (AskResult, error) {
 
 	c := NewClient("test-key", "gemini-2.5-flash")
 	c.baseURL = srv.URL
-	return c.Ask(context.Background(), "who knows machine learning", testRecords(), nil)
+	return c.Ask(context.Background(), "who knows machine learning", testAllResults(), testStanding(), nil)
 }
 
 func TestAskParsesGeminiResponse(t *testing.T) {
@@ -58,7 +60,7 @@ func TestAskParsesGeminiResponse(t *testing.T) {
 	c := NewClient("test-key", "gemini-2.5-flash")
 	c.baseURL = srv.URL
 
-	got, err := c.Ask(context.Background(), "who knows machine learning", testRecords(), nil)
+	got, err := c.Ask(context.Background(), "who knows machine learning", testAllResults(), testStanding(), nil)
 	if err != nil {
 		t.Fatalf("Ask: %v", err)
 	}
@@ -126,7 +128,7 @@ func TestAskReportsGeminiErrorBody(t *testing.T) {
 
 func TestAskRequiresAPIKey(t *testing.T) {
 	c := NewClient("", "gemini-2.5-flash")
-	_, err := c.Ask(context.Background(), "anything", nil, nil)
+	_, err := c.Ask(context.Background(), "anything", search.AllResults{}, nil, nil)
 	if err == nil {
 		t.Fatal("want error for empty API key, got nil")
 	}
@@ -166,7 +168,7 @@ func TestAskSendsHistoryInPrompt(t *testing.T) {
 	c.baseURL = srv.URL
 
 	history := []Turn{{Query: "who knows cybersecurity", Answer: "Divynash does."}}
-	if _, err := c.Ask(context.Background(), "tell me more about her", testRecords(), history); err != nil {
+	if _, err := c.Ask(context.Background(), "tell me more about her", testAllResults(), testStanding(), history); err != nil {
 		t.Fatalf("Ask: %v", err)
 	}
 	if !strings.Contains(gotBody, "who knows cybersecurity") || !strings.Contains(gotBody, "Divynash does.") {
